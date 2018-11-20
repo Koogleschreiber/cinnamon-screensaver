@@ -13,7 +13,7 @@ ALIGNMENTS = [int(Gtk.Align.START), int(Gtk.Align.END), int(Gtk.Align.CENTER)]
 class Floating:
     def __init__(self, initial_monitor=0):
         super(Floating, self).__init__()
-        self.set_halign(Gtk.Align.CENTER)
+        self.set_halign(Gtk.Align.END)
         self.set_valign(Gtk.Align.CENTER)
         self.current_monitor = initial_monitor
 
@@ -41,8 +41,8 @@ class Floating:
         while vertical == current_valign:
             vertical = ALIGNMENTS[random.randint(0, 2)]
 
-        self.set_halign(Gtk.Align(horizontal))
-        self.set_valign(Gtk.Align(vertical))
+        # self.set_halign(Gtk.Align(horizontal))
+        # self.set_valign(Gtk.Align(vertical))
 
         if status.screen.get_n_monitors() > 1:
             new_monitor = self.current_monitor
@@ -51,7 +51,7 @@ class Floating:
             while new_monitor == self.current_monitor:
                 new_monitor = random.randint(0, n - 1)
 
-            self.current_monitor = new_monitor
+            # self.current_monitor = new_monitor
 
         self.queue_resize()
 

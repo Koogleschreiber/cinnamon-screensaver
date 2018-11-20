@@ -24,6 +24,7 @@ class AlbumArt(Floating, BaseWindow):
         super(AlbumArt, self).__init__(initial_monitor)
         self.get_style_context().add_class("albumart")
         self.set_halign(Gtk.Align.END)
+        self.set_valign(Gtk.Align.CENTER)
 
         if not settings.get_show_albumart():
             return
