@@ -15,7 +15,6 @@ from clock import ClockWidget
 from albumArt import AlbumArt
 from audioPanel import AudioPanel
 from infoPanel import InfoPanel
-from floating import ALIGNMENTS
 from util import utils, trackers, settings
 from util.fader import Fader
 from util.eventHandler import EventHandler
@@ -881,28 +880,6 @@ class Stage(Gtk.Window):
                     child.set_halign(Gtk.Align.END)
 
                 child.set_valign(Gtk.Align.CENTER)
-            else:
-                if settings.get_allow_floating():
-                    for floater in self.floaters:
-                        """
-                        Don't let our floating widgets end up in the same spot.
-                        """
-                        if floater is child:
-                            continue
-                        if floater.get_halign() != child.get_halign() and floater.get_valign() != child.get_valign():
-                            continue
-
-                        fa = floater.get_halign()
-                        ca = child.get_halign()
-                        while fa == ca:
-                            ca = ALIGNMENTS[random.randint(0, 2)]
-                        child.set_halign(ca)
-
-                        fa = floater.get_valign()
-                        ca = child.get_valign()
-                        while fa == ca:
-                            ca = ALIGNMENTS[random.randint(0, 2)]
-                        child.set_valign(ca)
 
             # Restrict the widget size to the allowable region sizes if necessary.
             allocation.width = min(nat_rect.width, region_w)
