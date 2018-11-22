@@ -4,12 +4,12 @@
 .csstage .unlockbox {
     color: #ffffff;
     font-size: 20px;
-    text-shadow: 5px 5px #E5E5E5CC; 
+    text-shadow: 5px 5px #000000CC; 
 }
 
 .csstage .clock {
     color: #ffffff;
-    text-shadow: 5px 5px #E5E5E5CC; 
+    text-shadow: 5px 5px #000000CC; 
 }
 
 .csstage .toppanel {
@@ -35,7 +35,7 @@
     color: white;
     background-color: transparent;
     background-image: none;
-    text-shadow: 1px 1px #E5E5E5CC;
+    text-shadow: 1px 1px #000000CC;
     padding: 6px;
 }
 
@@ -59,23 +59,7 @@
 .csstage .passwordentry progress {
     margin: 2px;
     padding: 0;
-    border-radius: 0;
-    border-width: 0 0 2px;
-}
-
-.csstage .passwordentry progress:focus {
-    background-color: transparent;
-}
-
-.csstage .passwordentry image.left {
-    padding-right: 10px;
-}
-
-/* Use :backdrop for alt-text keyboard layout */
-.csstage .passwordentry:backdrop {
-    font-family: monospace;
-    font-size: 14px;
-    color: @theme_selected_bg_color;
+    border: none;
 }
 
 .csstage .transparentbutton {
@@ -100,10 +84,11 @@
     color: #FFFFFF;
 }
 
-/*.csstage .passwordentry:focus,
+.csstage .passwordentry:focus,
 .csstage .transparentbutton:focus {
     background-color: alpha(grey, .3);
     box-shadow: 1px 1px alpha(white, 0.1);
+    border: none;
 }
 
 .csstage .passwordentry:hover,
@@ -111,25 +96,30 @@
     border-color: alpha(white, .2);
     background-color: alpha(grey, .2);
     box-shadow: 1px 1px alpha(white, 0.1);
+    border: none;
+
 }
 
 .csstage .passwordentry:hover:focus,
 .csstage .transparentbutton:hover:focus {
     background-color: alpha(grey, .4);
     box-shadow: 1px 1px alpha(white, 0.1);
+    border: none;
 }
 
 .csstage .passwordentry:active,
 .csstage .transparentbutton:active {
     background-color: alpha(grey, .6);
     box-shadow: 1px 1px alpha(white, 0.1);
+    border: none;
 }
 
 .csstage .passwordentry:active:focus,
 .csstage .transparentbutton:active:focus {
     background-color: alpha(grey, .9);
     box-shadow: 1px 1px alpha(white, 0.1);
-}*/
+    border: none;
+}
 
 .csstage .volumeslider {
     min-height: 24px;
