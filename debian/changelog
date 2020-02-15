@@ -1,3 +1,57 @@
+cinnamon-screensaver (4.4.1) tricia; urgency=medium
+
+  [ GeorchW ]
+  * Fixed wrong font being applied in custom text (#328)
+
+  [ claudiux ]
+  * Update cinnamon-screensaver to fix #326 (#327)
+
+ -- Clement Lefebvre <root@linuxmint.com>  Tue, 10 Dec 2019 09:58:06 +0000
+
+cinnamon-screensaver (4.4.0) tricia; urgency=medium
+
+  [ Michael Webster ]
+  * passwordEntry.py: Render keyboard layout flags properly in hidpi.
+  * cs-screen, stage.py: Move the pointer to the primary monitor (and, as a result, the unlock dialog as well) when initially waking.
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sat, 16 Nov 2019 12:24:53 +0100
+
+cinnamon-screensaver (4.2.0) tina; urgency=medium
+
+  [ Michael Webster ]
+  * monitorView.py: refactor wallpaper transitioning to improve garbage collection.
+  * Add on-screen keyboard.
+  * stage.py: Only involve the stage fader if the transition time is not zero.
+  * stage: re-realize when/if the GdkScreen's composited state changes.
+  * Remove use of a fader on the stage window, eliminate off-screen mapping. (#309)
+
+  [ Clement Lefebvre ]
+  * OSK: Respect the cinnamon OSK activation mode
+
+  [ Eli Schwartz ]
+  * A couple small install fixups. (#302)
+
+  [ Clement Lefebvre ]
+  * Packaging: Remove obsolete build flag
+
+ -- Clement Lefebvre <root@linuxmint.com>  Sun, 23 Jun 2019 15:42:14 +0200
+
+cinnamon-screensaver (4.0.3) tessa; urgency=medium
+
+  [ Michael Webster ]
+  * all: Add low-resolution detection, adjust the clock and albumart widgets to be smaller in these cases.
+  * audio panel: Don't show initially.
+  * framedImage.py: Use surfaces for better hidpi display of album art.
+
+ -- Clement Lefebvre <root@linuxmint.com>  Tue, 11 Dec 2018 11:24:36 +0000
+
+cinnamon-screensaver (4.0.2) tessa; urgency=medium
+
+  [ Michael Webster ]
+  * floating.py: Revert accidental change to widget positioning frequency.
+
+ -- Clement Lefebvre <root@linuxmint.com>  Thu, 06 Dec 2018 13:20:21 +0000
+
 cinnamon-screensaver (4.0.1) tessa; urgency=medium
 
   [ Michael Webster ]

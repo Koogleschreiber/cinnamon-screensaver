@@ -28,6 +28,7 @@
 enum {
         SCREEN_MONITORS_CHANGED,
         SCREEN_SIZE_CHANGED,
+        COMPOSITED_CHANGED,
         LAST_SIGNAL
 };
 
@@ -169,6 +170,42 @@ apply_scale_factor (CsMonitorInfo *infos,
                infos[i].rect.width,
                infos[i].rect.height);
     }
+}
+
+#define MONITOR_WIDTH_THRESHOLD 1200
+#define MONITOR_HEIGHT_THRESHOLD 1000
+
+static gboolean
+get_low_res_mode (CsScreen      *screen,
+                  CsMonitorInfo *infos,
+                  gint           n_infos)
+{
+    gint i;
+    gint smallest_width, smallest_height;
+
+    smallest_width = smallest_height = G_MAXINT;
+
+    for (i = 0; i < n_infos; i++)
+    {
+        smallest_width = MIN (infos[i].rect.width, smallest_width);
+        smallest_height = MIN (infos[i].rect.height, smallest_height);
+    }
+
+    screen->smallest_width = smallest_width;
+    screen->smallest_height = smallest_height;
+
+    if (smallest_width < MONITOR_WIDTH_THRESHOLD || smallest_height < MONITOR_HEIGHT_THRESHOLD)
+    {
+        DEBUG ("Narrowest monitor width after scaling (%dx%d) is below threshold of %dx%d, applying low-res mode\n",
+               smallest_width,
+               smallest_height,
+               MONITOR_WIDTH_THRESHOLD,
+               MONITOR_HEIGHT_THRESHOLD);
+
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 static void
@@ -358,6 +395,10 @@ reload_monitor_infos (CsScreen *screen)
                         screen->n_monitor_infos,
                         gdk_screen_get_monitor_scale_factor (screen->gdk_screen, PRIMARY_MONITOR));
 
+    screen->low_res = get_low_res_mode (screen,
+                                        screen->monitor_infos,
+                                        screen->n_monitor_infos);
+
     g_assert (screen->n_monitor_infos > 0);
     g_assert (screen->monitor_infos != NULL);
 }
@@ -407,12 +448,34 @@ on_screen_changed (GdkScreen *gdk_screen, gpointer user_data)
 }
 
 static void
+on_composited_changed (GdkScreen *gdk_screen, gpointer user_data)
+{
+    CsScreen *screen;
+
+    screen = CS_SCREEN (user_data);
+
+    DEBUG ("CsScreen received 'composited-changed' signal from GdkScreen\n");
+
+    g_signal_emit (screen, signals[COMPOSITED_CHANGED], 0);
+}
+
+static void
 cs_screen_init (CsScreen *screen)
 {
     screen->gdk_screen = gdk_screen_get_default ();
 
-    screen->monitors_changed_id = g_signal_connect (screen->gdk_screen, "monitors-changed", G_CALLBACK (on_monitors_changed), screen);
-    screen->screen_size_changed_id = g_signal_connect (screen->gdk_screen, "size-changed", G_CALLBACK (on_screen_changed), screen);
+    screen->monitors_changed_id = g_signal_connect (screen->gdk_screen,
+                                                    "monitors-changed",
+                                                    G_CALLBACK (on_monitors_changed),
+                                                    screen);
+    screen->screen_size_changed_id = g_signal_connect (screen->gdk_screen,
+                                                       "size-changed",
+                                                       G_CALLBACK (on_screen_changed),
+                                                       screen);
+    screen->composited_changed_id = g_signal_connect (screen->gdk_screen,
+                                                      "composited-changed",
+                                                      G_CALLBACK (on_composited_changed),
+                                                      screen);
 
     reload_screen_info (screen);
     reload_monitor_infos (screen);
@@ -460,6 +523,12 @@ cs_screen_dispose (GObject *object)
         screen->screen_size_changed_id = 0;
     }
 
+    if (screen->composited_changed_id > 0)
+    {
+        g_signal_handler_disconnect (screen->gdk_screen, screen->composited_changed_id);
+        screen->composited_changed_id = 0;
+    }
+
     DEBUG ("CsScreen dispose\n");
 
     G_OBJECT_CLASS (cs_screen_parent_class)->dispose (object);
@@ -481,6 +550,13 @@ cs_screen_class_init (CsScreenClass *klass)
                                               G_TYPE_NONE, 0);
 
     signals[SCREEN_SIZE_CHANGED] = g_signal_new ("size-changed",
+                                            G_TYPE_FROM_CLASS (object_class),
+                                            G_SIGNAL_RUN_LAST,
+                                            0,
+                                            NULL, NULL, NULL,
+                                            G_TYPE_NONE, 0);
+
+    signals[COMPOSITED_CHANGED] = g_signal_new ("composited-changed",
                                             G_TYPE_FROM_CLASS (object_class),
                                             G_SIGNAL_RUN_LAST,
                                             0,
@@ -635,13 +711,91 @@ cs_screen_get_mouse_monitor (CsScreen *screen)
 }
 
 /**
+ * cs_screen_get_low_res_mode:
+ * @screen: a #CsScreen
+ *
+ * Gets whether or not one of our monitors falls below the low res threshold (1200 wide).
+ * This lets us display certain things at smaller sizes to prevent truncating of images, etc.
+ *
+ * Returns: Whether or not to use low res mode.
+ */
+gboolean
+cs_screen_get_low_res_mode (CsScreen *screen)
+{
+    g_return_val_if_fail (CS_IS_SCREEN (screen), FALSE);
+
+    return screen->low_res;
+}
+
+/**
+ * cs_screen_get_smallest_monitor_sizes:
+ * @screen: a #CsScreen
+ * @width: (out): width of the smallest monitor
+ * @height: (out): height of the smallest monitor
+ *
+ * Gets whether or not one of our monitors falls below the low res threshold (1200 wide).
+ * This lets us display certain things at smaller sizes to prevent truncating of images, etc.
+ *
+ * Returns: Whether or not to use low res mode.
+ */
+void
+cs_screen_get_smallest_monitor_sizes (CsScreen *screen,
+                                      gint     *width,
+                                      gint     *height)
+{
+    g_return_if_fail (CS_IS_SCREEN (screen));
+
+    if (width != NULL)
+    {
+        *width = screen->smallest_width;
+    }
+
+    if (height != NULL)
+    {
+        *height = screen->smallest_height;
+    }
+}
+
+/**
+ * cs_screen_center_pointer_in_primary_monitor:
+ * @screen: The #CsScreen
+ *
+ * Warps the mouse pointer to the center in x, and half again below center
+ * in y, of the primary monitor.  This is used during waking to have the
+ * unlock dialog appear on the primary monitor (at least, initially).
+ */
+void
+cs_screen_place_pointer_in_primary_monitor (CsScreen *screen)
+{
+    GdkDisplay *display;
+    GdkRectangle rect;
+    GdkSeat *seat;
+    GdkDevice *pointer;
+
+    g_return_if_fail (CS_IS_SCREEN (screen));
+
+    cs_screen_get_monitor_geometry (screen,
+                                    screen->primary_monitor_index,
+                                    &rect);
+
+    display = gdk_screen_get_display (screen->gdk_screen);
+    seat = gdk_display_get_default_seat (display);
+
+    pointer = gdk_seat_get_pointer (seat);
+
+    gdk_device_warp (pointer,
+                     screen->gdk_screen,
+                     rect.x + (rect.width * .5),
+                     rect.y + (rect.height * .75));
+}
+
+/**
  * cs_screen_reset_screensaver:
  *
  * Resets the screensaver idle timer. If called when the screensaver is active
  * it will stop it.
  *
  */
-
 void
 cs_screen_reset_screensaver (void)
 {

@@ -4,11 +4,12 @@
 import gi
 
 gi.require_version('CinnamonDesktop', '3.0')
-from gi.repository import Gtk, GdkPixbuf, Gio, GLib, GObject
+from gi.repository import Gtk, GdkPixbuf, Gio, GLib, GObject, Gdk
 
 from util import utils, trackers
 
 MAX_IMAGE_SIZE = 320
+MAX_IMAGE_SIZE_LOW_RES = 200
 
 class FramedImage(Gtk.Image):
     """
@@ -16,9 +17,9 @@ class FramedImage(Gtk.Image):
     its native size, up to a max sane size.
     """
     __gsignals__ = {
-        "pixbuf-changed": (GObject.SignalFlags.RUN_LAST, None, (object,))
+        "surface-changed": (GObject.SignalFlags.RUN_LAST, None, (object,))
     }
-    def __init__(self):
+    def __init__(self, low_res=False, scale_up=False):
         super(FramedImage, self).__init__()
         self.get_style_context().add_class("framedimage")
 
@@ -26,6 +27,12 @@ class FramedImage(Gtk.Image):
 
         self.file = None
         self.path = None
+        self.scale_up = scale_up
+
+        if low_res:
+            self.max_size = MAX_IMAGE_SIZE_LOW_RES
+        else:
+            self.max_size = MAX_IMAGE_SIZE
 
         trackers.con_tracker_get().connect(self, "realize", self.on_realized)
 
@@ -33,8 +40,8 @@ class FramedImage(Gtk.Image):
         self.generate_image()
 
     def clear_image(self):
-        self.set_from_pixbuf(None)
-        self.emit("pixbuf-changed", None)
+        self.set_from_surface(None)
+        self.emit("surface-changed", None)
 
     def set_from_path(self, path):
         self.path = path
@@ -52,6 +59,7 @@ class FramedImage(Gtk.Image):
 
     def set_image_internal(self, path):
         pixbuf = None
+        scaled_max_size = self.max_size * self.get_scale_factor()
 
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)
@@ -60,20 +68,23 @@ class FramedImage(Gtk.Image):
             error = True
 
         if pixbuf != None:
-            if pixbuf.get_height() > MAX_IMAGE_SIZE or pixbuf.get_width() > MAX_IMAGE_SIZE:
+            if (pixbuf.get_height() > scaled_max_size or pixbuf.get_width() > scaled_max_size) or \
+               (self.scale_up and (pixbuf.get_height() < scaled_max_size / 2 or pixbuf.get_width() < scaled_max_size / 2)):
                 try:
-                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, MAX_IMAGE_SIZE, MAX_IMAGE_SIZE)
+                    pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(path, scaled_max_size, scaled_max_size)
                 except GLib.Error as e:
                     message = "Could not scale pixbuf from '%s' for FramedImage: %s" % (path, e.message)
                     error = True
 
         if pixbuf:
-            self.set_from_pixbuf(pixbuf)
+            surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf,
+                                                           self.get_scale_factor(),
+                                                           self.get_window())
+            self.set_from_surface(surface)
+            self.emit("surface-changed", surface)
         else:
             print(message)
             self.clear_image()
-
-        self.emit("pixbuf-changed", pixbuf)
 
     def generate_image(self):
         if self.path:

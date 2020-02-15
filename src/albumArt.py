@@ -8,6 +8,7 @@ from floating import Floating
 from widgets.framedImage import FramedImage
 
 import singletons
+import status
 
 class AlbumArt(Floating, BaseWindow):
     """
@@ -34,14 +35,14 @@ class AlbumArt(Floating, BaseWindow):
 
         self.current_url = None
 
-        self.image = FramedImage()
+        self.image = FramedImage(status.screen.get_low_res_mode(), scale_up=True)
         self.image.show()
         self.image.set_opacity(0.0)
         self.add(self.image)
 
         trackers.con_tracker_get().connect(self.image,
-                                           "pixbuf-changed",
-                                           self.on_pixbuf_changed)
+                                           "surface-changed",
+                                           self.on_surface_changed)
 
         if self.player != None:
             trackers.con_tracker_get().connect(self.player,
@@ -49,8 +50,8 @@ class AlbumArt(Floating, BaseWindow):
                                                self.on_metadata_changed)
             self.on_metadata_changed(self.player)
 
-    def on_pixbuf_changed(self, image, pixbuf):
-        if image.get_pixbuf() != None:
+    def on_surface_changed(self, image, surface):
+        if surface != None:
             self.image.set_opacity(1.0)
         else:
             self.image.set_opacity(0.0)

@@ -40,6 +40,11 @@ typedef struct
 
     gulong monitors_changed_id;
     gulong screen_size_changed_id;
+    gulong composited_changed_id;
+
+    gboolean low_res;
+    gint smallest_width;
+    gint smallest_height;
 } CsScreen;
 
 typedef struct
@@ -63,6 +68,14 @@ gint                         cs_screen_get_primary_monitor (CsScreen *screen);
 gint                         cs_screen_get_n_monitors (CsScreen *screen);
 
 gint                         cs_screen_get_mouse_monitor (CsScreen *screen);
+
+gboolean                     cs_screen_get_low_res_mode (CsScreen *screen);
+
+void                         cs_screen_get_smallest_monitor_sizes (CsScreen *screen,
+                                                                   gint     *width,
+                                                                   gint     *height);
+
+void                         cs_screen_place_pointer_in_primary_monitor (CsScreen *screen);
 
 void                         cs_screen_reset_screensaver (void);
 
